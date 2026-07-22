@@ -1,6 +1,6 @@
 # Brodgar.io Proximity Voice Chat
 
-[![Latest release](https://img.shields.io/github/v/release/irongete/brodgar-io-voice-client)](https://github.com/irongete/brodgar-io-voice-client/releases/latest) &nbsp;·&nbsp; **[⬇ Download brodgar-voice-all.jar](https://github.com/irongete/brodgar-io-voice-client/releases/latest/download/brodgar-voice-all.jar)**
+[![Latest release](https://img.shields.io/github/v/release/irongete/brodgar-io-voice-client)](https://github.com/irongete/brodgar-io-voice-client/releases/latest) &nbsp;·&nbsp; **[⬇ Download brodgar-voice-all.jar](https://github.com/irongete/brodgar-io-voice-client/releases/latest/download/brodgar-voice-all.jar)** &nbsp;·&nbsp; **[Reference client](https://github.com/irongete/brodgar-io-client)**
 
 Proximity voice chat for [Haven & Hearth](https://www.havenandhearth.com/)
 community clients. Self-contained: one library jar + one adapter file + three lines
