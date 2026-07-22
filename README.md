@@ -1,5 +1,7 @@
 # Brodgar.io Proximity Voice Chat
 
+[![Latest release](https://img.shields.io/github/v/release/irongete/brodgar-io-voice-client)](https://github.com/irongete/brodgar-io-voice-client/releases/latest) &nbsp;·&nbsp; **[⬇ Download brodgar-voice-all.jar](https://github.com/irongete/brodgar-io-voice-client/releases/latest/download/brodgar-voice-all.jar)**
+
 Proximity voice chat for [Haven & Hearth](https://www.havenandhearth.com/)
 community clients. Self-contained: one library jar + one adapter file + three lines
 in `MapView`. Everything else — connection, mic capture, Opus, encryption,
@@ -39,21 +41,22 @@ The rest of this file is the quick version.
 | `docs/` | the full integration guide |
 | `pom.xml` | builds the library jar |
 
-## Build
+## Get the jar
+
+**Download the prebuilt [`brodgar-voice-all.jar`](https://github.com/irongete/brodgar-io-voice-client/releases/latest/download/brodgar-voice-all.jar)** from the
+latest release — a fat jar with Opus + JSON bundled, ready for your classpath,
+nothing else to add.
+
+Or build from source:
 
 ```
 mvn -q package
 ```
 
-produces two jars in `target/`:
-
-- **`brodgar-voice-all.jar`** — fat jar (Opus + JSON bundled). Put this one on your
-  client's classpath and you're done, nothing else to add.
-- `brodgar-voice.jar` — thin jar, if you'd rather manage Concentus + minimal-json
-  yourself.
-
-Runs the unit suite (jitter buffer, FEC, AGC, spatializer, wire codec, crypto
-round-trips incl. the RFC 5869 HKDF vector).
+produces `target/brodgar-voice-all.jar` (fat) and `target/brodgar-voice.jar` (thin,
+if you'd rather manage Concentus + minimal-json yourself), and runs the unit suite
+(jitter buffer, FEC, AGC, spatializer, wire codec, crypto round-trips incl. the
+RFC 5869 HKDF vector).
 
 ## Integrate (3 steps)
 
