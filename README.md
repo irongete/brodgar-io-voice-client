@@ -83,9 +83,23 @@ if(inf == null) io.brodgar.voice.Voice.onMove(MapView.this, mc);
 io.brodgar.voice.Voice.tick();
 ```
 
-Plus a small `spatialAzimuth` helper method on `MapView` (it reaches the camera's
-view matrix, so it can't live in the adapter) — see
-**[docs/getting-started](docs/getting-started.md#3-wire-up-mapview)** for the copy-paste.
+And one small helper **method** on `MapView` — the eye-space azimuth of a map point,
+the same computation the game uses for its own positional sounds. It lives here
+because it reaches the camera's `view` matrix, which is only accessible from inside
+`MapView`:
+
+```java
+public double spatialAzimuth(Coord2d mc) {
+    Coord3f cc;
+    try { cc = getcc(); } catch(Loading e) { return(Double.NaN); }
+    Coord3f eye = camera.view.fin(Matrix4f.id).mul4(new Coord3f((float)mc.x, -(float)mc.y, cc.z));
+    return(Math.atan2(eye.x, -eye.z));   // 0 = ahead, + = right
+}
+```
+
+The adapter calls it every frame from `Voice.tick()` to pan each voice smoothly in
+any camera. See **[docs/getting-started](docs/getting-started.md#3-wire-up-mapview)**
+for the full walkthrough.
 
 That's the whole integration. It never blocks the game thread (all work runs on
 background daemon threads), never throws into the game, and if the voice server is
