@@ -22,8 +22,8 @@ to the jar's manifest `Class-Path` if you launch with `-jar`).
 ## 2. Copy the adapter
 
 Copy **`adapter/io/brodgar/voice/Voice.java`** into your client's source at
-`src/io/brodgar/voice/Voice.java`. It uses only public `haven.*` APIs, so it needs
-no changes to any existing class.
+`src/io/brodgar/voice/Voice.java`. It uses only public `haven.*` APIs plus one small
+helper you add to `MapView` in step 3.
 
 The server address is the `SERVER` constant at the top:
 
@@ -31,9 +31,10 @@ The server address is the `SERVER` constant at the top:
 private static final String SERVER = "wss://voice.brodgar.io";
 ```
 
-## 3. Wire up MapView (3 lines)
+## 3. Wire up MapView
 
-These three lines are the **whole** required integration.
+Add these to `haven/MapView.java`. **a–c** are the core integration; **d–e** enable
+smooth 3D spatialization.
 
 **a) Connect on entering the game** — in the `MapView` constructor:
 
@@ -58,6 +59,31 @@ if(inf == null) io.brodgar.voice.Voice.onMove(MapView.this, mc);
 `inf == null` is a click on the ground (a move order); `mc` is the destination.
 Reporting it the instant a move is issued is what keeps proximity routing honest.
 
+**d) Per-frame spatialization** — in `MapView.tick(double dt)`:
+
+```java
+io.brodgar.voice.Voice.tick();
+```
+
+This repositions each voice every frame — the same cadence the game ticks its own
+positional audio — so panning stays smooth in any camera.
+
+**e) The `spatialAzimuth` helper** — add this method to `MapView`. The adapter calls
+it; it lives here because it uses the camera's `view` matrix, which is only reachable
+from inside `MapView`:
+
+```java
+public double spatialAzimuth(Coord2d mc) {
+    Coord3f cc;
+    try { cc = getcc(); } catch(Loading e) { return(Double.NaN); }
+    Coord3f eye = camera.view.fin(Matrix4f.id).mul4(new Coord3f((float)mc.x, -(float)mc.y, cc.z));
+    return(Math.atan2(eye.x, -eye.z));   // eye-space azimuth, 0 = ahead, + = right
+}
+```
+
+This is the same eye-space computation `haven.ActAudio` uses for footsteps and every
+other in-world sound, so voices pan identically and never jump between ears.
+
 ## 4. Verify
 
 Launch the client. You should see in the log:
@@ -74,7 +100,8 @@ the game is completely unaffected (you'll just see a warning in the log).
 
 - The **microphone opens** and transmits **voice-activated** by default — no
   push-to-talk needed to start.
-- Audio is **spatialized** (stereo pan + distance attenuation) to match the screen.
+- Audio is **spatialized** (stereo pan + distance attenuation) to match the screen,
+  exactly like the game's own positional sounds.
 - The connection **auto-reconnects** with backoff if it drops.
 - Only **relative vectors** ever leave the machine; the server decides who hears whom.
 

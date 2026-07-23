@@ -1,12 +1,14 @@
 package io.brodgar.voice.audio;
 
 /**
- * Turns the local vector to a speaker into stereo gains: distance attenuation
- * plus equal-power left/right panning. Pure math, computed entirely on the
- * client from the player's own relative vectors, which never leave the machine.
+ * Turns a listener-relative vector into stereo gains: distance attenuation plus
+ * horizontal panning, mirroring the game's own positional audio. Pure client-side
+ * math; the vectors never leave the machine.
  *
- * <p>Convention: {@code dx} is tiles east (→ right ear), {@code dy} is tiles
- * south (front/back, which stereo cannot render, so it only affects distance).
+ * <p>The vector is in the camera's horizontal frame: {@code right} is tiles to the
+ * listener's right on screen, {@code forward} is tiles into the screen. Panning is
+ * the azimuth off the forward axis, saturating to a full ear past ~22.5&deg; — the
+ * same balance the game uses for footsteps and every other in-world sound.
  */
 public final class Spatializer {
 
@@ -24,19 +26,20 @@ public final class Spatializer {
     /** Both ears at full volume — used when spatialization is disabled. */
     public static final Gains CENTERED_FULL = new Gains(1f, 1f);
 
+    private static final double SATURATE = Math.PI / 8.0; // azimuth mapped to a full ear
+
     private Spatializer() {
     }
 
     /**
-     * @param dx      tiles east of the local player (negative = west)
-     * @param dy      tiles south of the local player
+     * @param right   tiles to the listener's right (negative = left)
+     * @param forward tiles into the screen (negative = behind)
      * @param near    full-volume radius in tiles (no attenuation within it)
      * @param minGain attenuation floor so distant-but-in-range players stay audible
      */
-    public static Gains compute(double dx, double dy, float near, float minGain) {
-        double dist = Math.hypot(dx, dy);
+    public static Gains compute(double right, double forward, float near, float minGain) {
+        double dist = Math.hypot(right, forward);
 
-        // Inverse-distance attenuation with a near plateau and a floor.
         float atten;
         if (dist <= near) {
             atten = 1f;
@@ -44,12 +47,11 @@ public final class Spatializer {
             atten = (float) Math.max(minGain, near / dist);
         }
 
-        // Equal-power pan from the east/west component: pan -1 (left) .. +1 (right).
-        double pan = dist < 1e-6 ? 0.0 : clamp(dx / dist, -1.0, 1.0);
-        double angle = (pan + 1.0) * 0.25 * Math.PI; // 0 .. pi/2
-        float left = (float) Math.cos(angle);
-        float right = (float) Math.sin(angle);
-        return new Gains(atten * left, atten * right);
+        // Azimuth off the forward axis, saturated like the game's balance, then
+        // equal-power panned (constant perceived loudness across the sweep).
+        double bal = (dist < 1e-6) ? 0.0 : clamp(Math.atan2(right, forward) / SATURATE, -1.0, 1.0);
+        double angle = (bal + 1.0) * 0.25 * Math.PI; // 0 .. pi/2
+        return new Gains(atten * (float) Math.cos(angle), atten * (float) Math.sin(angle));
     }
 
     private static double clamp(double v, double lo, double hi) {

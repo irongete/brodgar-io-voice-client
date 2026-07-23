@@ -67,7 +67,7 @@ RFC 5869 HKDF vector).
 client's source at `src/io/brodgar/voice/Voice.java`. It uses only public `haven.*`
 APIs. The server address is the `SERVER` constant at the top (`wss://voice.brodgar.io`).
 
-**3. Add three lines to `haven/MapView.java`:**
+**3. Wire up `haven/MapView.java`** — three call sites, plus two lines for 3D audio:
 
 ```java
 // in the MapView constructor (enter the game):
@@ -78,11 +78,18 @@ io.brodgar.voice.Voice.detach(this);
 
 // in hit(...) — the ground-click path:
 if(inf == null) io.brodgar.voice.Voice.onMove(MapView.this, mc);
+
+// in tick(double dt) — per-frame spatialization, like the game's own audio:
+io.brodgar.voice.Voice.tick();
 ```
 
-That's the whole required integration. It never blocks the game thread (all work
-runs on background daemon threads), never throws into the game, and if the voice
-server is unreachable the game is completely unaffected.
+Plus a small `spatialAzimuth` helper method on `MapView` (it reaches the camera's
+view matrix, so it can't live in the adapter) — see
+**[docs/getting-started](docs/getting-started.md#3-wire-up-mapview)** for the copy-paste.
+
+That's the whole integration. It never blocks the game thread (all work runs on
+background daemon threads), never throws into the game, and if the voice server is
+unreachable the game is completely unaffected.
 
 ## Runtime control API
 
